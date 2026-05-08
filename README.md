@@ -94,7 +94,7 @@ project/
     └── adf_pipeline.json      # Azure Data Factory pipeline definition (Copy + Notebook)
 ```
 
----
+
 
 ## 5. Step-by-Step Execution (Local)
 
@@ -143,7 +143,7 @@ python -c "from databricks.gold_layer import export_gold_to_sqlite; export_gold_
 sqlite3 data/serving.db < sql/queries.sql
 ```
 
-### 5.4 Run on Real Azure (optional)
+### 5.4 Run on Real Azure 
 
 1. Create an **Azure Data Lake Gen2** account and four containers: `raw`, `bronze`, `silver`, `gold`.
 2. Import `pipelines/adf_pipeline.json` into **Azure Data Factory**
@@ -152,22 +152,8 @@ sqlite3 data/serving.db < sql/queries.sql
 4. Replace the local paths (`./data/...`) with `abfss://<container>@<storage>.dfs.core.windows.net/...`.
 5. Trigger the ADF pipeline — it will copy from the API, then run the three notebooks.
 
----
 
-## 6. Screenshots (placeholders)
-
-Add real screenshots in `docs/screenshots/` and link them here:
-
-- `docs/screenshots/01_adf_pipeline.png` — Azure Data Factory pipeline run
-- `docs/screenshots/02_databricks_bronze.png` — Bronze notebook output
-- `docs/screenshots/03_databricks_silver.png` — Silver notebook with `display(df)`
-- `docs/screenshots/04_gold_table.png` — Gold layer Delta table preview
-- `docs/screenshots/05_powerbi_dashboard.png` — Power BI dashboard
-- `docs/screenshots/06_sql_queries.png` — Analytical SQL output
-
----
-
-## 7. Power BI (Conceptual)
+## 6. Power BI (Conceptual)
 
 Once the Gold layer is loaded into Azure SQL, connect Power BI Desktop:
 
@@ -180,21 +166,8 @@ Once the Gold layer is loaded into Azure SQL, connect Power BI Desktop:
    - **Slicer**: Category filter
 4. Publish to the Power BI Service and schedule a daily refresh that aligns with the ADF pipeline.
 
----
 
-## 8. Resume Bullet Points
 
-Copy / adapt these directly into your CV:
 
-- Designed and implemented an end-to-end **Azure data pipeline** (ADF → ADLS Gen2 → Databricks → Azure SQL → Power BI) following the **Medallion Architecture (Bronze / Silver / Gold)**.
-- Built ingestion in **Python** that pulls from REST APIs and lands raw JSON to **Azure Data Lake Storage Gen2**, orchestrated by **Azure Data Factory**.
-- Developed **PySpark** notebooks on **Azure Databricks** to clean, normalize, and aggregate data into **Delta Lake** tables, achieving ACID guarantees and time travel.
-- Engineered **business-ready Gold tables** (revenue by category, top-rated products, price buckets) and exposed them to **Azure SQL** for **Power BI** dashboards.
-- Authored **DDL and analytical SQL** for the serving layer and parameterized **ADF pipeline JSON** for repeatable deployments.
-- Ensured the codebase is **modular, idempotent, and locally runnable**, enabling fast iteration without cloud costs.
 
----
 
-## 9. License
-
-MIT — free to fork, learn from, and adapt for your own portfolio.
