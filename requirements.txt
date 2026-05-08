@@ -1,0 +1,27 @@
+# =====================================================================
+# Python dependencies for the Azure + Databricks portfolio project.
+# Pinned to versions that play nicely together as of 2026.
+# Install with:  pip install -r requirements.txt
+# =====================================================================
+
+# --- Core data engineering ---
+pyspark==3.5.1            # Apache Spark Python API (used in databricks/*.py)
+delta-spark==3.2.0        # Delta Lake connector for Spark 3.5
+pandas==2.2.2             # Local data wrangling and SQLite export
+pyarrow==15.0.2           # Required by pandas/Spark for Parquet/Delta
+
+# --- Ingestion ---
+requests==2.32.3          # HTTP client for hitting the public API
+
+# --- Serving layer ---
+SQLAlchemy==2.0.30        # Lightweight ORM-ish layer to write to SQLite/Azure SQL
+# pyodbc==5.1.0           # Uncomment if connecting to real Azure SQL via ODBC
+
+# --- Optional dev / quality ---
+python-dotenv==1.0.1      # Load configuration from a .env file
+loguru==0.7.2             # Nicer logging
+
+# Notes:
+# 1. PySpark requires Java 8 or Java 11 to be installed and on the PATH.
+# 2. On Apple Silicon, set: export JAVA_HOME=$(/usr/libexec/java_home -v 11)
+# 3. delta-spark==3.2.0 must match the Spark version (3.5.x).

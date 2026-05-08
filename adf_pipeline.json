@@ -1,0 +1,184 @@
+{
+    "_comment": [
+        "Azure Data Factory pipeline definition for the portfolio project.",
+        "",
+        "Pipeline name : pl_products_medallion",
+        "Trigger       : daily 02:00 UTC (configure via the ADF UI separately)",
+        "",
+        "Activities:",
+        "  1. cp_api_to_raw          - HTTP -> ADLS Gen2 (RAW)  : copies the API JSON.",
+        "  2. nb_bronze              - Databricks notebook      : raw -> bronze Delta.",
+        "  3. nb_silver              - Databricks notebook      : bronze -> silver Delta.",
+        "  4. nb_gold                - Databricks notebook      : silver -> gold Delta + serving.",
+        "",
+        "To deploy:",
+        "  Author -> Pipelines -> + -> Import from JSON -> paste this file.",
+        "  Replace the linked-service references with the ones in your factory."
+    ],
+    "name": "pl_products_medallion",
+    "properties": {
+        "description": "End-to-end medallion pipeline for the FakeStore products dataset.",
+        "concurrency": 1,
+        "annotations": [
+            "portfolio",
+            "medallion",
+            "databricks"
+        ],
+        "parameters": {
+            "ingest_date": {
+                "type": "String",
+                "defaultValue": "@formatDateTime(utcNow(), 'yyyy-MM-dd')"
+            },
+            "raw_container": {
+                "type": "String",
+                "defaultValue": "raw"
+            },
+            "products_relative_path": {
+                "type": "String",
+                "defaultValue": "products"
+            }
+        },
+        "activities": [
+            {
+                "name": "cp_api_to_raw",
+                "type": "Copy",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "0.00:30:00",
+                    "retry": 2,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "source": {
+                        "type": "RestSource",
+                        "httpRequestTimeout": "00:01:40",
+                        "requestInterval": "00.00:00:00.010",
+                        "requestMethod": "GET"
+                    },
+                    "sink": {
+                        "type": "JsonSink",
+                        "storeSettings": {
+                            "type": "AzureBlobFSWriteSettings"
+                        },
+                        "formatSettings": {
+                            "type": "JsonWriteSettings",
+                            "filePattern": "arrayOfObjects"
+                        }
+                    },
+                    "enableStaging": false
+                },
+                "inputs": [
+                    {
+                        "referenceName": "ds_fakestore_products_api",
+                        "type": "DatasetReference"
+                    }
+                ],
+                "outputs": [
+                    {
+                        "referenceName": "ds_adls_raw_products_json",
+                        "type": "DatasetReference",
+                        "parameters": {
+                            "ingest_date": {
+                                "value": "@pipeline().parameters.ingest_date",
+                                "type": "Expression"
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "nb_bronze",
+                "type": "DatabricksNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "cp_api_to_raw",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.01:00:00",
+                    "retry": 1,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/Shared/portfolio/bronze_layer",
+                    "baseParameters": {
+                        "ingest_date": {
+                            "value": "@pipeline().parameters.ingest_date",
+                            "type": "Expression"
+                        }
+                    }
+                },
+                "linkedServiceName": {
+                    "referenceName": "ls_azure_databricks",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "nb_silver",
+                "type": "DatabricksNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "nb_bronze",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.01:00:00",
+                    "retry": 1,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/Shared/portfolio/silver_layer"
+                },
+                "linkedServiceName": {
+                    "referenceName": "ls_azure_databricks",
+                    "type": "LinkedServiceReference"
+                }
+            },
+            {
+                "name": "nb_gold",
+                "type": "DatabricksNotebook",
+                "dependsOn": [
+                    {
+                        "activity": "nb_silver",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "policy": {
+                    "timeout": "0.01:00:00",
+                    "retry": 1,
+                    "retryIntervalInSeconds": 60,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "notebookPath": "/Shared/portfolio/gold_layer"
+                },
+                "linkedServiceName": {
+                    "referenceName": "ls_azure_databricks",
+                    "type": "LinkedServiceReference"
+                }
+            }
+        ],
+        "folder": {
+            "name": "portfolio"
+        }
+    }
+}
